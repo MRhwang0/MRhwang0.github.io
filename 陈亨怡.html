@@ -1,0 +1,315 @@
+<html lang="zh"><head>
+    <meta charset="UTF-8">
+    <title>学生刺绣作品展</title>
+    <style>
+        /* ===== 基础样式 ===== */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "微软雅黑", sans-serif;
+            background: #fffaf5;
+            margin: 0;
+            padding: 0;
+            color: #444;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #d4a373, #faedcd);
+            color: #4b3832;
+            text-align: center;
+            padding: 40px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.4em;
+        }
+        header p {
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            padding: 40px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .work-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .work-card:hover {
+            transform: translateY(-6px);
+        }
+        .work-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+        .work-info {
+            padding: 16px;
+        }
+        .work-title {
+            font-size: 1.2em;
+            margin: 0 0 8px;
+            color: #7f5539;
+        }
+        .work-author {
+            font-size: 0.95em;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .work-desc {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #faedcd;
+            color: #7f5539;
+            font-size: 0.9em;
+        }
+
+        /* ===== 绣布拉开式开屏特效 ===== */
+        #curtain {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            display: flex;
+            pointer-events: none;
+        }
+        .curtain-half {
+            flex: 1;
+            height: 100%;
+            background: linear-gradient(135deg, #d4a373, #faedcd);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .left-text {
+            font-size: 2.8em;
+            color: #4b3832;
+            letter-spacing: 4px;
+            transform: rotate(-90deg);
+        }
+        .right-text {
+            font-size: 2.8em;
+            color: #4b3832;
+            letter-spacing: 4px;
+            transform: rotate(90deg);
+        }
+
+        /* 丝线飘动层 */
+        .thread-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .thread {
+            position: absolute;
+            width: 1px;
+            height: 80px;
+            background: rgba(255,255,255,0.6);
+            transform-origin: top center;
+            animation: sway 4s ease-in-out infinite;
+        }
+        .thread:nth-child(1) { left: 20%; top: 30%; animation-delay: 0s; }
+        .thread:nth-child(2) { left: 35%; top: 50%; animation-delay: 1s; }
+        .thread:nth-child(3) { left: 60%; top: 20%; animation-delay: 2s; }
+        .thread:nth-child(4) { left: 75%; top: 65%; animation-delay: 0.5s; }
+        .thread:nth-child(5) { left: 50%; top: 80%; animation-delay: 1.5s; }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(6deg); }
+        }
+
+        /* 自动收起动画 */
+        @keyframes slideOutLeft {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100%); opacity: 0; }
+        }
+        @keyframes slideOutRight {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        .slide-left {
+            animation: slideOutLeft 2.5s ease-in-out forwards;
+        }
+        .slide-right {
+            animation: slideOutRight 2.5s ease-in-out forwards;
+        }
+
+        /* 快速收起动画（点击跳过时用） */
+        @keyframes quickSlideOutLeft {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100%); opacity: 0; }
+        }
+        @keyframes quickSlideOutRight {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        .quick-slide-left {
+            animation: quickSlideOutLeft 0.6s ease-in-out forwards !important;
+        }
+        .quick-slide-right {
+            animation: quickSlideOutRight 0.6s ease-in-out forwards !important;
+        }
+
+        /* 隐藏音频控件 */
+        audio {
+            display: none;
+        }
+
+        /* 提示文字 */
+        .skip-hint {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: #4b3832;
+            font-size: 1em;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 背景音乐 -->
+<audio id="bgMusic" loop="">
+    <!-- 请将 guzheng.mp3 放在同目录，或替换为你的古筝音频路径 -->
+    <source src="guzheng.mp3" type="audio/mpeg">
+    您的浏览器不支持音频播放。
+</audio>
+
+<!-- 绣布拉开式开屏 -->
+<div id="curtain">
+    <div id="leftCurtain" class="curtain-half slide-left" style="display: none;">
+        <div class="left-text">刺</div>
+        <div class="thread-layer">
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+        </div>
+        <div class="skip-hint">点击任意处跳过</div>
+    </div>
+    <div id="rightCurtain" class="curtain-half slide-right" style="display: none;">
+        <div class="right-text">绣</div>
+        <div class="thread-layer">
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+            <div class="thread"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 页面主体 -->
+<header>
+    <h1>学生刺绣作品展</h1>
+    <p>一针一线，织出青春的色彩与匠心</p>
+</header>
+
+<main class="gallery">
+    <div class="work-card">
+        <img class="work-img" src="李沁霏原图.jpg" alt="春花烂漫刺绣">
+        <div class="work-info">
+            <h3 class="work-title">春花烂漫</h3>
+            <p class="work-author">作者：李小雨 | 初二（3）班</p>
+            <p class="work-desc">以细腻的丝线描绘春日繁花，色彩渐变自然，展现生机盎然的景象。</p>
+        </div>
+    </div>
+    <div class="work-card">
+        <img class="work-img" src="李沁霏.jpg" alt="山水清韵刺绣">
+        <div class="work-info">
+            <h3 class="work-title">山水清韵</h3>
+            <p class="work-author">作者：王晨曦 | 高一（1）班</p>
+            <p class="work-desc">融合传统水墨意境，用针法表现远山近水，层次分明。</p>
+        </div>
+    </div>
+    <div class="work-card">
+        <img class="work-img" src="赵紫涵原图.jpg" alt="蝶舞芳华刺绣">
+        <div class="work-info">
+            <h3 class="work-title">蝶舞芳华</h3>
+            <p class="work-author">作者：陈思琪 | 初三（5）班</p>
+            <p class="work-desc">蝴蝶翩跹于花间，运用多种针法营造轻盈灵动的视觉效果。</p>
+        </div>
+    </div>
+    <div class="work-card">
+        <img class="work-img" src="赵紫涵.jpg" alt="童趣时光刺绣">
+        <div class="work-info">
+            <h3 class="work-title">童趣时光</h3>
+            <p class="work-author">作者：赵子涵 | 小学六年级</p>
+            <p class="work-desc">用明快的色块与卡通形象记录童年游戏的欢乐瞬间。</p>
+        </div>
+    </div>
+</main>
+
+<footer>
+    © 2026 青少年人工智能教育平台 · 刺绣艺术展区
+</footer>
+
+<script>
+    window.addEventListener('load', () => {
+        const curtain = document.getElementById('curtain');
+        const left = document.getElementById('leftCurtain');
+        const right = document.getElementById('rightCurtain');
+        const music = document.getElementById('bgMusic');
+
+        // 尝试播放背景音乐
+        const playMusic = () => {
+            music.play().catch(() => {
+                // 自动播放被阻止时的静默处理
+            });
+        };
+
+        // 正常自动播放动画（2.5秒后关闭）
+        const autoClose = () => {
+            left.classList.add('slide-left');
+            right.classList.add('slide-right');
+            setTimeout(() => {
+                left.style.display = 'none';
+                right.style.display = 'none';
+            }, 2500);
+        };
+
+        // 点击跳过函数
+        const skipIntro = () => {
+            left.classList.remove('slide-left');
+            right.classList.remove('slide-right');
+            left.classList.add('quick-slide-left');
+            right.classList.add('quick-slide-right');
+            playMusic();
+            setTimeout(() => {
+                left.style.display = 'none';
+                right.style.display = 'none';
+            }, 600);
+            curtain.removeEventListener('click', skipIntro);
+        };
+
+        curtain.addEventListener('click', skipIntro);
+        autoClose();
+    });
+</script>
+
+
+</body></html>
